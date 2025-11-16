@@ -1,0 +1,400 @@
+class Building:
+    def __init__(self, bid, name, location):
+        self.id = bid
+        self.name = name
+        self.location = location
+
+    def __repr__(self):
+        return f"{self.id}-{self.name}"
+
+
+class BSTNode:
+    def __init__(self, b):
+        self.b = b
+        self.left = None
+        self.right = None
+
+
+class BST:
+    def __init__(self):
+        self.root = None
+
+    def insert(self, b):
+        def add(n, b):
+            if not n:
+                return BSTNode(b)
+            if b.id < n.b.id:
+                n.left = add(n.left, b)
+            elif b.id > n.b.id:
+                n.right = add(n.right, b)
+            return n
+
+        self.root = add(self.root, b)
+
+    def search(self, bid):
+        n = self.root
+        while n:
+            if n.b.id == bid:
+                return n.b
+            if bid < n.b.id:
+                n = n.left
+            else:
+                n = n.right
+        return None
+
+    def inorder(self):
+        res = []
+
+        def t(n):
+            if n:
+                t(n.left)
+                res.append(n.b)
+                t(n.right)
+
+        t(self.root)
+        return res
+
+    def preorder(self):
+        res = []
+
+        def t(n):
+            if n:
+                res.append(n.b)
+                t(n.left)
+                t(n.right)
+
+        t(self.root)
+        return res
+
+    def postorder(self):
+        res = []
+
+        def t(n):
+            if n:
+                t(n.left)
+                t(n.right)
+                res.append(n.b)
+
+        t(self.root)
+        return res
+
+    def height(self):
+        def h(n):
+            if not n:
+                return 0
+            return 1 + max(h(n.left), h(n.right))
+
+        return h(self.root)
+
+
+class AVLNode:
+    def __init__(self, b):
+        self.b = b
+        self.left = None
+        self.right = None
+        self.h = 1
+
+
+class AVLTree:
+    def __init__(self):
+        self.root = None
+
+    def height(self, n):
+        return n.h if n else 0
+
+    def balance(self, n):
+        return self.height(n.left) - self.height(n.right) if n else 0
+
+    def rotate_right(self, y):
+        x = y.left
+        t2 = x.right
+        x.right = y
+        y.left = t2
+        y.h = 1 + max(self.height(y.left), self.height(y.right))
+        x.h = 1 + max(self.height(x.left), self.height(x.right))
+        return x
+
+    def rotate_left(self, x):
+        y = x.right
+        t2 = y.left
+        y.left = x
+        x.right = t2
+        x.h = 1 + max(self.height(x.left), self.height(x.right))
+        y.h = 1 + max(self.height(y.left), self.height(y.right))
+        return y
+
+    def insert(self, b):
+        def add(n, b):
+            if not n:
+                return AVLNode(b)
+            if b.id < n.b.id:
+                n.left = add(n.left, b)
+            elif b.id > n.b.id:
+                n.right = add(n.right, b)
+            else:
+                return n
+
+            n.h = 1 + max(self.height(n.left), self.height(n.right))
+            bal = self.balance(n)
+
+            if bal > 1 and b.id < n.left.b.id:
+                return self.rotate_right(n)
+            if bal < -1 and b.id > n.right.b.id:
+                return self.rotate_left(n)
+            if bal > 1 and b.id > n.left.b.id:
+                n.left = self.rotate_left(n.left)
+                return self.rotate_right(n)
+            if bal < -1 and b.id < n.right.b.id:
+                n.right = self.rotate_right(n.right)
+                return self.rotate_left(n)
+
+            return n
+
+        self.root = add(self.root, b)
+
+    def inorder(self):
+        res = []
+
+        def t(n):
+            if n:
+                t(n.left)
+                res.append(n.b)
+                t(n.right)
+
+        t(self.root)
+        return res
+
+    def height_tree(self):
+        return self.height(self.root)
+
+
+import math, heapq
+
+
+class Graph:
+    def __init__(self):
+        self.adj = {}
+
+    def add_building(self, b):
+        if b.id not in self.adj:
+            self.adj[b.id] = []
+
+    def add_edge(self, u, v, w):
+        self.adj[u].append((v, w))
+        self.adj[v].append((u, w))
+
+    def adjacency_list(self):
+        return self.adj
+
+    def adjacency_matrix(self):
+        ids = sorted(self.adj.keys())
+        n = len(ids)
+        mat = [[0] * n for _ in range(n)]
+        for i, u in enumerate(ids):
+            for v, w in self.adj[u]:
+                j = ids.index(v)
+                mat[i][j] = w
+        return ids, mat
+
+    def bfs(self, s):
+        q = [s]
+        vis = {s}
+        out = []
+        while q:
+            u = q.pop(0)
+            out.append(u)
+            for v, _ in self.adj[u]:
+                if v not in vis:
+                    vis.add(v)
+                    q.append(v)
+        return out
+
+    def dfs(self, s):
+        st = [s]
+        vis = set()
+        out = []
+        while st:
+            u = st.pop()
+            if u not in vis:
+                vis.add(u)
+                out.append(u)
+                for v, _ in reversed(self.adj[u]):
+                    if v not in vis:
+                        st.append(v)
+        return out
+
+    def dijkstra(self, s):
+        dist = {i: math.inf for i in self.adj}
+        parent = {i: None for i in self.adj}
+        dist[s] = 0
+        pq = [(0, s)]
+        while pq:
+            d, u = heapq.heappop(pq)
+            if d > dist[u]:
+                continue
+            for v, w in self.adj[u]:
+                if dist[v] > dist[u] + w:
+                    dist[v] = dist[u] + w
+                    parent[v] = u
+                    heapq.heappush(pq, (dist[v], v))
+        return dist, parent
+
+    def mst_kruskal(self):
+        edges = []
+        for u in self.adj:
+            for v, w in self.adj[u]:
+                if u < v:
+                    edges.append((w, u, v))
+        edges.sort()
+
+        parent = {}
+
+        def find(x):
+            if parent.get(x, x) == x:
+                return x
+            parent[x] = find(parent[x])
+            return parent[x]
+
+        def union(a, b):
+            pa, pb = find(a), find(b)
+            if pa != pb:
+                parent[pb] = pa
+                return True
+            return False
+
+        mst = []
+        total = 0
+
+        for w, u, v in edges:
+            if union(u, v):
+                mst.append((u, v, w))
+                total += w
+
+        return mst, total
+
+
+class ExprNode:
+    def __init__(self, v):
+        self.v = v
+        self.left = None
+        self.right = None
+
+
+def infix_to_postfix(s):
+    out = []
+    st = []
+    prec = {'+': 1, '-': 1, '*': 2, '/': 2, '^': 3}
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if c.isdigit():
+            num = c
+            i += 1
+            while i < len(s) and s[i].isdigit():
+                num += s[i]
+                i += 1
+            out.append(num)
+            continue
+        if c.isalpha():
+            out.append(c)
+        elif c == '(':
+            st.append(c)
+        elif c == ')':
+            while st and st[-1] != '(':
+                out.append(st.pop())
+            st.pop()
+        else:
+            while st and st[-1] != '(' and prec.get(st[-1], 0) >= prec.get(c, 0):
+                out.append(st.pop())
+            st.append(c)
+        i += 1
+    while st:
+        out.append(st.pop())
+    return out
+
+
+def build_expr_tree(post):
+    st = []
+    for t in post:
+        n = ExprNode(t)
+        if t in "+-*/^":
+            n.right = st.pop()
+            n.left = st.pop()
+        st.append(n)
+    return st[-1]
+
+
+def eval_expr(n, vars):
+    if n.v.isdigit():
+        return float(n.v)
+    if n.v.isalpha():
+        return vars.get(n.v, 0)
+    a = eval_expr(n.left, vars)
+    b = eval_expr(n.right, vars)
+    if n.v == '+':
+        return a + b
+    if n.v == '-':
+        return a - b
+    if n.v == '*':
+        return a * b
+    if n.v == '/':
+        return a / b
+    if n.v == '^':
+        return a ** b
+
+
+if __name__ == "__main__":
+    buildings = [
+        Building(50, "Admin", "Central"),
+        Building(10, "Library", "North"),
+        Building(70, "CSE", "C-Block"),
+        Building(30, "Mechanical", "M-Block"),
+        Building(20, "Cafeteria", "Food Court")
+    ]
+
+    bst = BST()
+    for b in buildings:
+        bst.insert(b)
+
+    print("BST inorder:", bst.inorder())
+    print("BST preorder:", bst.preorder())
+    print("BST postorder:", bst.postorder())
+    print("BST height:", bst.height())
+
+    avl = AVLTree()
+    for b in buildings:
+        avl.insert(b)
+
+    print("AVL inorder:", avl.inorder())
+    print("AVL height:", avl.height_tree())
+
+    g = Graph()
+    for b in buildings:
+        g.add_building(b)
+
+    g.add_edge(10, 20, 30)
+    g.add_edge(10, 30, 80)
+    g.add_edge(30, 50, 40)
+    g.add_edge(50, 70, 60)
+
+    print("Adjacency List:", g.adjacency_list())
+
+    ids, mat = g.adjacency_matrix()
+    print("Adjacency Matrix IDs:", ids)
+    for row in mat:
+        print(row)
+
+    print("BFS:", g.bfs(10))
+    print("DFS:", g.dfs(10))
+
+    dist, parent = g.dijkstra(10)
+    print("Dijkstra:", dist)
+
+    mst, total = g.mst_kruskal()
+    print("MST:", mst, "Total weight:", total)
+
+    expr = "3+5*2"
+    post = infix_to_postfix(expr)
+    tree = build_expr_tree(post)
+    print("Expression:", expr, "Value:", eval_expr(tree, {}))
+
